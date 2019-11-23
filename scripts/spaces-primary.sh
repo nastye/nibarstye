@@ -16,8 +16,8 @@ ACTIVE=$(yabai -m query --spaces --space | jq .index)
 echo $(cat <<-EOF
 {
 	"desktop": {
-        "spaces": $SPACES,
-        "active": $ACTIVE
+    "spaces": $SPACES,
+    "active": $ACTIVE
 	}
 }
 EOF

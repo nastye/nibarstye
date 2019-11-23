@@ -10,14 +10,13 @@ fi
 
 SPACES=$(yabai -m query --spaces --display 2)
 ACTIVE=$(yabai -m query --spaces --space | jq .index)
-APP_NAME=$(yabai -m query --windows --window | jq .app)
+# APP_NAME=$(yabai -m query --windows --window | jq .app)
 
 echo $(cat <<-EOF
 {
 	"desktop": {
-        "spaces": $SPACES,
-        "active": $ACTIVE,
-        "app": $APP_NAME
+    "spaces": $SPACES,
+    "active": $ACTIVE
 	}
 }
 EOF

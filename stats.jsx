@@ -2,11 +2,11 @@ import DateTime from "./lib/DateTime.jsx";
 import Battery from "./lib/Battery.jsx";
 import Cpu from "./lib/Cpu.jsx";
 import Wifi from "./lib/Wifi.jsx";
-import Dnd from "./lib/Dnd.jsx";
-import Netstats from "./lib/Netstats.jsx";
+import Volume from "./lib/Volume.jsx";
 import Error from "./lib/Error.jsx";
 import parse from "./lib/parse.jsx";
 import styles from "./lib/styles.jsx";
+import Spotify from "./lib/Spotify.jsx";
 
 const style = {
   display: "grid",
@@ -39,8 +39,10 @@ export const render = ({ output }) => {
   }
   return (
     <div style={style}>
-      <Netstats output={data.netstats} />
-      <Dnd output={data.dnd} />
+{/*   <Netstats output={data.netstats} /> */}
+{/*   <Dnd output={data.dnd} /> */}
+      <Spotify output={data.spotify} />
+      <Volume output={data.volume} />
       <Wifi output={data.wifi} />
       <Cpu output={data.cpu} />
       <Battery output={data.battery} />

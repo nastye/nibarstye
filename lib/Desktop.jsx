@@ -12,14 +12,14 @@ const desktopStyle = {
 
 const renderSpace = (index, active, windows) => {
   let contentStyle = JSON.parse(JSON.stringify(desktopStyle));
-  let hasWindows = windows > 0;
+  {/* let hasWindows = windows > 0; */}
   if (index == active) {
     contentStyle.color = styles.colors.fg;
   }
   return (
     <div style={contentStyle}>
       {index}
-      {hasWindows ? "°" : " "}
+      {/*hasWindows ? "°" : */" "}
     </div>
   );
 };

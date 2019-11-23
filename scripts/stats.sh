@@ -1,49 +1,6 @@
 #!/bin/bash
 
-# ETHERNET: get the current number of bytes in and bytes out
-myvar1=`netstat -ibn | grep -e "en0" -m 1 | awk '{print $7}'` #  bytes in
-myvar3=`netstat -ibn | grep -e "en0" -m 1 | awk '{print $10}'` # bytes out
-
-# AIRPORT: get the current number of bytes in and bytes out
-apmyvar1=`netstat -ibn | grep -e "en1" -m 1 | awk '{print $7}'` #  bytes in
-apmyvar3=`netstat -ibn | grep -e "en1" -m 1 | awk '{print $10}'` # bytes out
-
-#wait one second
-sleep 1
-
-# ETHERNET: get the number of bytes in and out one second later
-myvar2=`netstat -ibn | grep -e "en0" -m 1 | awk '{print $7}'` # bytes in again
-myvar4=`netstat -ibn | grep -e "en0" -m 1 | awk '{print $10}'` # bytes out again
-
-# AIRPORT: get the number of bytes in and out one second later
-apmyvar2=`netstat -ibn | grep -e "en1" -m 1 | awk '{print $7}'` # bytes in again
-apmyvar4=`netstat -ibn | grep -e "en1" -m 1 | awk '{print $10}'` # bytes out again
-
-# ETHERNET: find the difference between bytes in and out during that one second
-subin=$(($myvar2 - $myvar1))
-subout=$(($myvar4 - $myvar3))
-
-# AIRPORT: find the difference between bytes in and out during that one second
-apsubin=$(($apmyvar2 - $apmyvar1))
-apsubout=$(($apmyvar4 - $apmyvar3))
-
-# ETHERNET: convert bytes to kilobytes
-kbin=`echo "scale=2; $subin/1024;" | bc`
-kbout=`echo "scale=2; $subout/1024;" | bc`
-
-# AIRPORT: convert bytes to kilobytes
-apkbin=`echo "scale=2; $apsubin/1024;" | bc`
-apkbout=`echo "scale=2; $apsubout/1024;" | bc`
-
-#AIRPORT: get IP address
-etherip=`ifconfig en0 | grep -E "(inet |status:)" | head -n 1 | awk '{ print $2}'`
-airip=`ifconfig en1 | grep -E "(inet |status:)" | head -n 1 | awk '{ print $2}'`
-
-# print the results
-# echo "Ethernet speeds:"
-# echo "in: $kbin Kb/sec"
-# echo "out: $kbout Kb/sec"
-# echo "$kbin#$kbout#$apkbin#$apkbout#$etherip#$airip"
+PATH=/usr/local/bin/:$PATH
 
 # Check if date exists
 if ! [ -x "$(command -v date)" ]; then
@@ -99,6 +56,12 @@ if ! [ -x "$(command -v grep)" ]; then
   exit 1
 fi
 
+# Check if sed exists
+if ! [ -x "$(command -v sed)" ]; then
+  echo "{\"error\":\"sed binary not found\"}"
+  exit 1
+fi
+
 # Check if awk exists
 if ! [ -x "$(command -v awk)" ]; then
   echo "{\"error\":\"awk binary not found\"}"
@@ -111,6 +74,18 @@ if ! [ -x "$(command -v networksetup)" ]; then
   exit 1
 fi
 
+# Check if shpotify exists
+if ! [ -x "$(command -v spotify)" ]; then
+  echo "{\"error\":\"shpotify binary not found\"}"
+  exit 1
+fi
+
+# Check if tr exists
+if ! [ -x "$(command -v tr)" ]; then
+  echo "{\"error\":\"tr binary not found\"}"
+  exit 1
+fi
+
 export LC_TIME="en_US.UTF-8"
 TIME=$(date +"%H:%M")
 DATE=$(date +"%a %d/%m")
@@ -120,7 +95,7 @@ BATTERY_STATUS=$(pmset -g batt | grep "'.*'" | sed "s/'//g" | cut -c 18-19)
 BATTERY_REMAINING=$(pmset -g batt | egrep -o '([0-9]+%).*' | cut -d\  -f3)
 
 BATTERY_CHARGING=""
-if [ "$BATTERY_STATUS" == "Ba" ]; then
+if [ "$BATTERY_STATUS" == "BA" ]; then
   BATTERY_CHARGING="false"
 elif [ "$BATTERY_STATUS" == "AC" ]; then
   BATTERY_CHARGING="true"
@@ -131,31 +106,53 @@ LOAD_AVERAGE=$(sysctl -n vm.loadavg | awk '{print $2}')
 WIFI_STATUS=$(ifconfig en0 | grep status | cut -c 10-)
 WIFI_SSID=$(networksetup -getairportnetwork en0 | cut -c 24-)
 
-DND=$(defaults -currentHost read com.apple.notificationcenterui doNotDisturb)
+ETHERIP=`ifconfig en0 | grep -E "(inet |status:)" | head -n 1 | awk '{ print $2}'`
+AIRIP=`ifconfig en1 | grep -E "(inet |status:)" | head -n 1 | awk '{ print $2}'`
+
+VOLUME=$(osascript -e 'output volume of (get volume settings)')
+if [ "$VOLUME" == "missing value" ]; then
+  VOLUME="external"
+  IS_MUTED="false"
+else
+  IS_MUTED=$(osascript -e 'output muted of (get volume settings)')
+fi
+
+SPOTIFY_ARTIST=""
+SPOTIFY_TRACK=""
+SPOTIFY_PLAYING=""
+if [ "$(osascript -e 'application "Spotify" is running')" == "true" ]; then
+  SPOTIFY_ARTIST=$(osascript -e 'tell application "Spotify" to artist of the current track')
+  SPOTIFY_TRACK=$(osascript -e 'tell application "Spotify" to name of the current track')
+  SPOTIFY_PLAYING=$(osascript -e 'tell application "Spotify" to player state')
+fi
 
 echo $(cat <<-EOF
 {
-    "datetime": {
-        "time": "$TIME",
-        "date": "$DATE"
-    },
-    "battery": {
-        "percentage": $BATTERY_PERCENTAGE,
-        "charging": $BATTERY_CHARGING,
-		"remaining": "$BATTERY_REMAINING"
-    },
-    "cpu": {
-        "loadAverage": $LOAD_AVERAGE
-    },
-    "wifi": {
-		"status": "$WIFI_STATUS",
-        "ssid": "$WIFI_SSID"
-    },
-	"netstats": {
-		"kbin": "$kbin",
-		"kbout": "$kbout"
-	},
-	"dnd": $DND
+  "datetime": {
+    "time": "$TIME",
+    "date": "$DATE"
+  },
+  "battery": {
+    "percentage": "$BATTERY_PERCENTAGE",
+    "charging": "$BATTERY_CHARGING",
+    "remaining": "$BATTERY_REMAINING"
+  },
+  "cpu": {
+    "loadAverage": "$LOAD_AVERAGE"
+  },
+  "wifi": {
+    "status": "$WIFI_STATUS",
+    "ssid": "$WIFI_SSID"
+  },
+  "volume": {
+    "value": "$VOLUME",
+    "mute": "$IS_MUTED"
+  },
+  "spotify": {
+    "artist": "$SPOTIFY_ARTIST",
+    "track": "$SPOTIFY_TRACK",
+    "playing": "$SPOTIFY_PLAYING"
+  }
 }
 EOF
 )

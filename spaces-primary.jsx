@@ -39,11 +39,16 @@ export const render = ({ output }) => {
       </div>
     );
   }
+  if (typeof data !== "undefined") {
+    return (
+      <div style={style}>
+        <Desktop output={data.desktop} />
+      </div>
+    );
+  }
   return (
-    <div style={style}>
-      <Desktop output={data.desktop} />
-    </div>
-  );
+    <div style={style}></div>
+  )
 };
 
 export default null;
