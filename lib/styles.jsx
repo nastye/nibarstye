@@ -4,7 +4,8 @@ export default {
     fg: "#e3dd30",
     dim: "#6c6c6c",
     bg: "#1c1c1c",
-    red: "#ff8700"
+    red: "#ff8700",
+    activebg: "#4ab7ff"
   },
   fontSize: "14px",
   lineHeight: "20px",

@@ -16,7 +16,7 @@ const style = {
   position: "fixed",
   overflow: "hidden",
   right: "0px",
-  top: "0px",
+  bottom: "0px",
   color: styles.colors.dim,
   fontFamily: styles.fontFamily,
   fontSize: styles.fontSize,
